@@ -12,31 +12,27 @@ import os
 import shutil
 import csv
 
-# Results Path
-# base_path = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/03 Run Data/by Runs/2022_09_03 B'
-# base_path = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/03 Run Data/by Runs/2022_09_05 Base/predictions Exp-F'
-results_dir = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/03 Run Data/by Runs/02 filter 10 testing Resampling'
-run_name = '2022_09_30_filter_10_Mixing 0_6'
-base_path = Path(results_dir, run_name)
-arg_filename = 'args.pkl'
-pred_filename = 'predictions_valid_set.csv'
-target_filename = 'target_test.csv'
-labels_filename = 'birdcalls_class_labels_indices.csv'
-csv_dst_filename = 'results_anlz_stats.csv'
-csv_dst_summary = Path(results_dir, 'summary.csv')
+# run_name = '2022_09_30_filter_10_Mixing 0_6'
+# base_path = Path(results_dir, run_name)
+# arg_filename = 'args.pkl'
+# pred_filename = 'predictions_valid_set.csv'
+# target_filename = 'target_test.csv'
+# labels_filename = 'birdcalls_class_labels_indices.csv'
+# csv_dst_filename = 'results_anlz_stats.csv'
+# csv_dst_summary = Path(results_dir, 'summary.csv')
 
-pred_path = Path(base_path, 'predictions', pred_filename)
-target_path = Path(base_path, 'predictions', target_filename)
-args_path = Path(base_path, arg_filename)
-labels_path = Path(base_path, labels_filename)
-csv_dst_path = Path(base_path, csv_dst_filename)
+# pred_path = Path(base_path, 'predictions', pred_filename)
+# target_path = Path(base_path, 'predictions', target_filename)
+# args_path = Path(base_path, arg_filename)
+# labels_path = Path(base_path, labels_filename)
+# csv_dst_path = Path(base_path, csv_dst_filename)
 
 
 # Jasons Path
-json_dir = Path(results_dir, 'labeled data 2022 09 14')
-train_json = Path(json_dir, 'birdcalls_train_data_low_count_filter_100.json')
-validate_json = Path(json_dir, 'birdcalls_validate_data_low_count_filter_100.json')
-test_json = Path(json_dir, 'birdcalls_test_data_low_count_filter_100.json')
+# json_dir = Path(results_dir, 'labeled data 2022 09 14')
+# train_json = Path(json_dir, 'birdcalls_train_data_low_count_filter_100.json')
+# validate_json = Path(json_dir, 'birdcalls_validate_data_low_count_filter_100.json')
+# test_json = Path(json_dir, 'birdcalls_test_data_low_count_filter_100.json')
 
 # Non-active labels filter values
 std_th = 1e-2
@@ -451,8 +447,6 @@ def compare_args(args_path1, args_path2):
 # 'MonkParakeet', 'PalestineSunbird', 'GracefulPrinia', 'GreatTit', 'EurasianCollaredDove', 'EuropeanRobin',
 # 'EgyptianGoose', 'White-ThroatedKingfisher', 'CommonMyna'])
 
-
-# src_json = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/03 Run Data/Predictions/birdcalls_test_data.json'
 # src_json =  Path(base_path, 'jsons', 'birdcalls_test_data_low_count_filter_10.json')
 
 
@@ -463,8 +457,6 @@ def compare_args(args_path1, args_path2):
 # ds.summary_rows
 
 # make_csv_on_all_results(results_dir, labels_path, 'filter 100')
-# copy_csvs_to_directory(results_dir, '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/05 Presentation/04 Run Results')
-
 
 # Running on test set
 # pred_filename = 'predictions_eval_set.csv'
@@ -474,6 +466,5 @@ def compare_args(args_path1, args_path2):
 # ds.to_csv(Path(results_dir, 'summary_test_set.csv'))
 
 # analyze_dir(res_dir, split_name='test')
-# res_dir = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/03 Run Data/by Runs/03 Report Model Size'
 # analyze_dir(res_dir, split_name='test', filter='model')
 # analyze_dir(res_dir, split_name='valid', filter='model')
