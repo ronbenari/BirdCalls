@@ -21,10 +21,6 @@ from project_utils import label_str_tolist
 
 # working_path = '/content/gdrive/My Drive/DeepLearning'
 # excel_path = '/content/gdrive/My Drive/DeepLearning/bird_records/audiomoth_general.xlsx'
-split_records_path = '/content/gdrive/My Drive/DeepLearning/project/labeled_data/'
-
-pc_excel_path = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/Raw Records/audiomoth_general.xlsx'
-pc_part_lists = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/part_lists.json'
 
 # marked_files.columns
 use_all_species_columns = True
@@ -511,8 +507,7 @@ def gen_pos_weight(json_src, labels_csv_path):
 
 # mf.generate_label_information('birdcalls_class_labels_indices.csv')
 
-# dst_dir = '/media/inbalron/WinDrive/Ron Learning/Deep Learning/birds/'
-# mf.
+
 
 
 
