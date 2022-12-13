@@ -24,6 +24,9 @@ from audiomentations import Resample
 from torch_audiomentations import PitchShift 
 import math
 
+### Modified for birds project
+ron_pavel_birds = True
+
 def make_index_dict(label_csv):
     index_lookup = {}
     with open(label_csv, 'r') as f:

@@ -20,6 +20,9 @@ import json
 import datetime
 from torch.cuda.amp import autocast,GradScaler
 
+### Modified for birds project
+ron_pavel_birds = True
+
 def train(audio_model, train_loader, test_loader, args, label_mask=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('running on ' + str(device))
@@ -342,7 +345,7 @@ def train(audio_model, train_loader, test_loader, args, label_mask=None):
     #     print("valid_loss: {:.6f}".format(valid_loss))
     #     np.savetxt(exp_dir + '/wa_result.csv', wa_result)
 
-def validate(audio_model, val_loader, args, epoch, label_mask=None, mode=''):
+def validate(audio_model, val_loader, args, epoch, label_mask=None, mode='', no_target_stats=False):
     print(f'label_mask={label_mask}')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     batch_time = AverageMeter()
@@ -399,14 +402,16 @@ def validate(audio_model, val_loader, args, epoch, label_mask=None, mode=''):
         # print(f'*** Audio output:\n {audio_output}')
         # print(f'*** Targets:\n {target}')
         # print('*** @validate calculate stats')
-        stats = calculate_stats(audio_output, target, label_mask=label_mask)
+        stats = calculate_stats(audio_output, target, label_mask=label_mask, no_target_stats=no_target_stats)
 
         # save the prediction here
         exp_dir = args.exp_dir
         target_str = 'target.csv' if mode is None else f'target_{mode}.csv'
         if os.path.exists(exp_dir+'/predictions') == False:
             os.mkdir(exp_dir+'/predictions')
-            np.savetxt(exp_dir+'/predictions/'+target_str, target, delimiter=',')
+            save_path = exp_dir+'/predictions/'+target_str
+            print(f'Saving {save_path}')
+            np.savetxt(save_path, target, delimiter=',')
         np.savetxt(exp_dir+'/predictions/predictions_' + str(epoch) + '.csv', audio_output, delimiter=',')
 
     return stats, loss

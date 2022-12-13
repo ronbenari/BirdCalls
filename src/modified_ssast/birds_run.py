@@ -8,6 +8,7 @@ import argparse
 import os
 import ast
 import pickle
+import platform
 import sys
 import time
 import torch
@@ -21,7 +22,12 @@ import numpy as np
 from traintest import train, validate
 from traintest_mask import trainmask
 
-print("I am process %s, running on %s: starting (%s)" % (os.getpid(), os.uname()[1], time.asctime()))
+win_os = False
+if (win_os):
+    print("I am process %s, running on %s: starting (%s)" % (os.getpid(), platform.uname()[1], time.asctime()))
+else:
+    print("I am process %s, running on %s: starting (%s)" % (os.getpid(), os.uname()[1], time.asctime()))
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--data-train", type=str, default=None, help="training data json")
@@ -203,7 +209,7 @@ def run(args, label_mask_path=None):
     return stats_list
 
 
-def eval_model(audio_model, model_params_path, args):
+def eval_model(audio_model, model_params_path, args, no_target_stats=False):
     val_audio_conf = {'num_mel_bins': args.num_mel_bins, 'target_length': args.target_length, 'freqm': 0, 'timem': 0,
                       'mixup': 0, 'dataset': args.dataset,
                       'mode': 'evaluation', 'mean': args.dataset_mean, 'std': args.dataset_std, 'noise': False}
@@ -218,7 +224,7 @@ def eval_model(audio_model, model_params_path, args):
     eval_loader = torch.utils.data.DataLoader(
         dataloader.AudioDataset(args.data_eval, label_csv=args.label_csv, audio_conf=val_audio_conf),
         batch_size=args.batch_size * 2, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    stats, _ = validate(audio_model, eval_loader, args, 'eval_set')
+    stats, _ = validate(audio_model, eval_loader, args, 'eval_set', no_target_stats=no_target_stats)
     # print Results
     eval_acc = stats[0]['acc']
     eval_mAUC = np.mean([stat['auc'] for stat in stats])
