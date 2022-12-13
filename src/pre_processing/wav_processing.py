@@ -266,6 +266,139 @@ class MarkedFiles:
         print(f'labels_in={labels_in}')
         print(f'labels_out={labels_out}')
 
+   
+    # -------------------------------------------------------------
+    # dataset preparation for Bird - no Bird 2 label binary classification task
+    # -------------------------------------------------------------
+    def generate_binary_label_information(self, b_csv_dst=None, csv_dst=None):
+        """
+        generate SSAST type labels based on unify species column
+        saves info to self params and optional to file
+        :param csv_dst: (optional) path to save csv labels file
+        """
+        if unified_species_col not in self.marked_files.columns:
+            self.gen_unify_species_column()
+        
+        # not used this block
+        species_list = self.marked_files[unified_species_col].to_list()
+        flat_list = list()
+        for sub_list in species_list:
+            flat_list += sub_list
+        species = set(flat_list)
+        # Find all specie types by unified species column
+        self.species = set(species)
+        # Generate labels by speechcommands_class_labels_indices,csv example
+        # Add "NoCall" labels
+
+        # original
+        zfill_n = math.ceil(math.log10(len(self.species) + 3))
+        labels = [label_prefix + str(k).zfill(zfill_n) for k in range(len(self.species) + 1)]
+        self.species_str = [no_call_label] + list(self.species)
+        self.labels_dict = dict(zip(self.species_str, labels))
+        self.labels_dict_inv = dict(zip(labels, self.species_str))
+        self.labels_df = pd.DataFrame(list(self.labels_dict_inv.items()), columns=labels_csv_columns[1:])
+        # Save to CSV
+        if csv_dst is not None:
+            self.labels_df.to_csv(csv_dst, index_label='index')        
+
+        b_zfill_n = math.ceil(math.log10(1 + 3))
+        b_labels = [label_prefix + str(k).zfill(b_zfill_n) for k in range(1 + 1)]
+        self.b_species_str = [no_call_label] + [bird_call_label]
+        self.b_labels_dict = dict(zip(self.b_species_str, b_labels))
+        self.b_labels_dict_inv = dict(zip(b_labels, self.b_species_str)) # zip( [/m/bird0, /m/bird1], [NoCall, BirdCall] ) 
+        self.b_labels_df = pd.DataFrame(list(self.b_labels_dict_inv.items()), columns=labels_csv_columns[1:])
+        # Save to CSV
+        if b_csv_dst is not None:
+            self.b_labels_df.to_csv(b_csv_dst, index_label='index')
+
+
+    def generate_binary_label_json(self, json_dst_dir=None, part_list_path=None, wav_record_path=None,
+                      partial=None, low_count_label_filter=None, binary_label=False):
+        """
+        generate train/validate/test jsons with labels by part_list json file and marked_files label data
+        :param json_dst_dir:  target directory for the generated json files
+        :param part_list_path: source path for the part_list json file (records divided to train/valid/test)
+        :param wav_record_path: path to the records location
+        :param partial: if not None should be dict with partial amount per train/valid/test
+        :param low_count_label_filter: if not None should be integer for filter threshold
+        :return: None
+        """
+        if self.labels_dict is None:
+            self.generate_label_information() # generate_binary_label_information
+        if self.labels_count is None:
+            self.count_labels()
+        if part_list_path is not None:
+            with open(part_list_path, 'r') as f:
+                part_list_dict = json.load(f)
+        else:
+            print('part_list path is needed')
+            return
+        if wav_record_path is None:
+            print('wav file records path path is needed')
+            return
+        # Generate low count label filter list
+        low_count_list = []
+        if low_count_label_filter is not None:
+            for label in self.labels_count.keys():
+                if self.labels_count[label] <= low_count_label_filter:
+                    low_count_list.append(label)
+        # Generate file labels
+        # zfill_n = math.ceil(math.log10(file_length_seconds + 3))
+        for split_str in data_split_str_list:
+            print(f'Processing {split_str} files')
+            file_data_list = []
+            for file_path in part_list_dict[split_str]:
+                file_path_p = Path(file_path)
+                file_stem = file_path_p.stem
+                file_df = self.marked_files.loc[self.marked_files[filename_col] == file_stem]
+                file_labels_list = ['' for _ in range(file_length_seconds)]
+                # Fill labels for every second in the file on file_labels_list
+                # Add 1sec file to the file_data_list
+                for t_sec in range(file_length_seconds):
+                    # Adding device number to file name
+                    device = recorder_device_from_original_path(file_path)
+                    one_sec_file_name = device + '_' + file_path_p.stem + '_' + str(t_sec) + file_path_p.suffix
+                    one_sec_file_path = Path(wav_record_path, split_str, one_sec_file_name)
+                    if t_sec in file_df[time_in_file_col].values:
+                        label_list = file_df.loc[file_df[time_in_file_col] == t_sec][unified_species_col].values[0]
+                        # Append only labels that are not on the low count filter list
+                        file_labels_list[t_sec] = ','.join([self.labels_dict[label] for label in label_list if
+                                                            label not in low_count_list])
+                        if (len(file_labels_list[t_sec]) > 0) and (binary_label == True):
+                             file_labels_list[t_sec] = self.b_labels_dict[bird_call_label]
+                    else:
+                        if (binary_label == True):
+                            file_labels_list[t_sec] = self.b_labels_dict[no_call_label]
+                        else:
+                            file_labels_list[t_sec] = self.labels_dict[no_call_label]
+                    file_data = {
+                        'wav': str(one_sec_file_path),
+                        'labels': file_labels_list[t_sec]
+                    }
+                    # Append only records with non empty label lists (after low count filter)
+                    if len(file_labels_list[t_sec]) > 0:
+                        file_data_list.append(file_data)
+            partial_str = ''
+            if partial is not None:
+                num_to_save = int(len(file_data_list) * partial[split_str])
+                file_data_list = file_data_list[:num_to_save]
+                partial_str = f'_partial_{num_to_save}'
+            low_count_str = ''
+            if low_count_label_filter is not None:
+                low_count_str = f'_low_count_filter_{low_count_label_filter}'
+            dst_file_name = f'birdcalls_{split_str}_data{partial_str}{low_count_str}.json'
+            dst_file = Path(json_dst_dir, dst_file_name)
+            with open(dst_file, 'w') as f:
+                json.dump({'data': file_data_list}, f, indent=1)
+        # Save label mask tensor
+        if low_count_label_filter is not None:
+            self.label_mask = [int(label not in low_count_list) for label in self.labels_df['display_name'].values]
+            # self.label_mask = torch.tensor(self.label_mask)
+            dst_mask_file = Path(json_dst_dir, f'label_mask{low_count_str}.json')
+            with open(dst_mask_file, 'w') as f:
+                json.dump({'label_mask': self.label_mask}, f, indent=1)
+
+
 
 def gen_unify_label_str(column_indexes):
     """
@@ -320,11 +453,12 @@ def load_data(load_path):
     return data_dict
 
 
-def split_wav_file(file_path, dst_dir_path, add_device=True):
+def split_wav_file(file_path, dst_dir_path, add_device=True, use_file_duration=False):
     """
     Split file_length_seconds wave file to 1sec files
     Using pydub module
     """
+    file_path = Path(file_path)
     # print(f'@split_wav_file file_path={file_path}')
     # print(f'@split_wav_file dst_dir_path={dst_dir_path}')
     wav_file = AudioSegment.from_file(file=file_path, format="wav")
@@ -336,12 +470,17 @@ def split_wav_file(file_path, dst_dir_path, add_device=True):
             device_str = file_device_dir.split(' ')[-1] + '_'
         else:
             device_str = '0_'
-    duration = wav_file.duration_seconds
-    if duration < file_length_seconds:
-        print(f'File {file_path} is less than {file_length_seconds} seconds. Not processed')
-        return
+    duration = int(wav_file.duration_seconds)
+    if not use_file_duration:
+        split_length = file_length_seconds
+        if duration < file_length_seconds:
+            print(f'File {file_path} is less than {file_length_seconds} seconds. Not processed')
+            return
+    else:
+        split_length = duration
+        print(f'Splitting {file_path}, duration {duration}')
     t_slice = 1000
-    for t_start in range(0, file_length_seconds * 1000, t_slice):
+    for t_start in range(0, split_length * 1000, t_slice):
         slice_audio = wav_file[t_start:t_start + t_slice]
         slice_filename = device_str + file_path.stem + f'_{int(t_start / 1000)}' + file_path.suffix
         slice_path = Path(dst_dir_path, slice_filename)
