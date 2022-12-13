@@ -11,4 +11,5 @@ Repository contains the following:
 1) Pre-processing code
 2) Modified SSAST source files
 3) Result analysis code
-4) Jupyter notebooks for running on Google Colab 
+4) Jupyter notebooks for running on Google Colab
+5) Inference code for predicting labels on record files using trained model
