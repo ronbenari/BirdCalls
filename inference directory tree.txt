@@ -1,0 +1,13 @@
+File/directory list of inference code directory:
+ - project_src (dir)
+    - analyze_ssast_results.py
+    - apply_pre_train_augmentation.py
+    - birds_ssast_data_setting.py
+    - data_validator.py
+    - get_norm_stats.py
+    - model_predict.py
+    - project_utils.py
+    - wav_processing.py
+ - ssast_modified_src (dir)
+    * same as SSAST original with modified traintest.py, stats.py
+ - project_predict_bin_file.ipynb
