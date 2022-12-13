@@ -3,6 +3,9 @@ from scipy import stats
 from sklearn import metrics
 import torch
 
+### Modified for birds project
+ron_pavel_birds = True
+
 # Ron: Don't show divide by zero errors
 np.seterr(divide='ignore')
 
@@ -11,7 +14,7 @@ def d_prime(auc):
     d_prime = standard_normal.ppf(auc) * np.sqrt(2.0)
     return d_prime
 
-def calculate_stats(output, target, label_mask=None):
+def calculate_stats(output, target, label_mask=None, no_target_stats=False):
     """Calculate statistics including mAP, AUC, etc.
 
     Args:
@@ -57,23 +60,23 @@ def calculate_stats(output, target, label_mask=None):
             avg_precision = 0
 
         # AUC
-        # Ron: Added check that target is not all zeros
-        if target[:, k].sum() > 0:
+        # Ron: Added check that target is not all zeros and no_target_stats option
+        if (target[:, k].sum() > 0) and not no_target_stats:
             auc = metrics.roc_auc_score(target[:, k], output[:, k], average=None)
         else:
             auc = 0
 
         # Precisions, recalls
-        # Ron: Added check that target is not all zeros
+        # Ron: Added check that target is not all zeros and no_target_stats option
         n_samples = len(target[:, k])
-        if target[:, k].sum() > 0:
+        if (target[:, k].sum() > 0) and not no_target_stats:
             (precisions, recalls, thresholds) = metrics.precision_recall_curve(target[:, k], output[:, k])
         else:
             (precisions, recalls, thresholds) = (np.zeros(n_samples), np.zeros(n_samples), np.zeros(1))
 
         # FPR, TPR
-        # Ron: Added check that target is not all zeros
-        if target[:, k].sum() > 0:
+        # Ron: Added check that target is not all zeros and no_target_stats option
+        if (target[:, k].sum() > 0) and not no_target_stats:
             (fpr, tpr, thresholds) = metrics.roc_curve(target[:, k], output[:, k])
         else:
             (fpr, tpr, thresholds) = (np.zeros(3), np.zeros(3), np.zeros(3))
